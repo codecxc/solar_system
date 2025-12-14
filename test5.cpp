@@ -113,6 +113,7 @@ struct Planet {
 	float orbit_eccentricity; // эксцентриситет
 	float orbit_tilt; // угол наклона орбиты
 };
+
 /*
 struct Sput {
         std::vector<Vertex>vertices;
@@ -125,6 +126,7 @@ struct Sput {
         std::string name;
 };
 */
+
 void vel_calculate(std::vector<Planet*>* planets) {
 	for(Planet* planet:*planets) {
 		if(planet->name=="Mercury") VEL_MERCURY=sqrt(2*((-G*MASS_SUN/(2*A_MERCURY))+(G*MASS_SUN/PERIHELION_MERCURY)));
@@ -177,7 +179,7 @@ void create_sphere(Planet* planet,float radius,float r,float g,float b) {
 // отрисовка сферы
 void draw_planet(Planet* planet) {
 	glBegin(GL_TRIANGLES);
-	for(size_t i=0;i<(planet->ind).size();++i) {
+	for(unsigned int i=0;i<(planet->ind).size();++i) {
 		Vertex* v=&(planet->ver[planet->ind[i]]);
 		glColor3f(v->r,v->g,v->b);
 		glVertex3f(v->x,v->y,v->z);
@@ -203,7 +205,7 @@ void draw_orbit(float a, float eccentricity, float tilt, float r, float g, float
 	glBegin(GL_LINE_LOOP);
 	for(int i=0;i<200;i++) {
 		float angle=2.0f*M_PI*i/200.0f;
-		float r_orbit=a*(1-eccentricity*eccentricity)/(1+eccentricity*cos(angle));
+		float r_orbit=a*(1-eccentricity*eccentricity)/(1+eccentricity*cos(angle)); // r=p/(1+ecos(q))
 		
 		r_orbit*=SCALE;
 		float x=r_orbit*cos(angle);
@@ -353,8 +355,8 @@ void draw_coordinate_system() {
 
 // инит планет
 void initialize_planets(std::vector<Planet*>* planets) {
-	for(Planet* p:*planets) delete p;
-	planets->clear();
+//	for(Planet* p:*planets) delete p;
+//	planets->clear();
 //	for(auto p:sputs) delete p;
 //      sputs.clear();
 	Planet* sun=new Planet();
@@ -486,7 +488,6 @@ struct Camera {
 };
 
 Camera camera;
-bool cameraRotating= false;
 
 
 
