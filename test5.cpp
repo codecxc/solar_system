@@ -9,7 +9,7 @@
 const double AU=1.496e11;
 const double G=6.67430e-11;
 const double SCALE=1.0/AU*30;
-const double TIME_SCALE=1000000;
+const double TIME_SCALE=86400;
 
 const double MASS_SUN=1.989e30;
 const double MASS_MERCURY=3.285e23;
@@ -624,10 +624,10 @@ int main() {
 
 
 	for(Planet* planet:planets) {
-		if(planet->name=="Mercury") planet->vz=VEL_MERCURY;
-		else if(planet->name=="Venus") planet->vz=VEL_VENUS;
-		else if(planet->name=="Earth") planet->vz=VEL_EARTH;
-		else if(planet->name=="Mars") planet->vz=VEL_MARS;
+		if(planet->name=="Mercury") {planet->vz=VEL_MERCURY;planet->vy=VEL_MERCURY*sin(TILT_MERCURY);}
+		else if(planet->name=="Venus") {planet->vz=VEL_VENUS;planet->vy=VEL_VENUS*sin(TILT_VENUS);}
+		else if(planet->name=="Earth") {planet->vz=VEL_EARTH;planet->vy=VEL_EARTH*sin(TILT_EARTH);}
+		else if(planet->name=="Mars") {planet->vz=VEL_MARS;planet->vy=VEL_MARS*sin(TILT_MARS);}
 	}
 	double last_time=glfwGetTime();
 	
@@ -636,7 +636,13 @@ int main() {
 	Tracker earth_tracker;
 	Tracker mars_tracker;
 	double period_mercury=0,period_venus=0,period_earth=0,period_mars=0;
-	
+	for(Planet* planet:planets) {
+               	if(planet->name=="Mercury") {print_data(planet, period_mercury);}
+                else if(planet->name=="Venus") {print_data(planet,period_venus);}
+                else if(planet->name=="Earth") {print_data(planet,period_earth);}
+        	else if(planet->name=="Mars") {print_data(planet,period_mars);}
+                else if(planet->name=="Sun") {print_data(planet,0);}
+        }
 	while(!glfwWindowShouldClose(window)) {
 		double current_time=glfwGetTime();
 		double delta_time=current_time-last_time;
@@ -721,7 +727,7 @@ int main() {
 			else if(planet->name=="Earth") {print_data(planet,period_earth);}
 			else if(planet->name=="Mars") {print_data(planet,period_mars);}
 			else if(planet->name=="Sun") {print_data(planet,0);}
-		}
+		} 
 		glEnable(GL_DEPTH_TEST);
 		glLineWidth(1.0f);
 		
