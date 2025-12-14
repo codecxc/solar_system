@@ -9,7 +9,7 @@
 const double AU=1.496e11;
 const double G=6.67430e-11;
 const double SCALE=1.0/AU*30;
-const double TIME_SCALE=80000.0;
+const double TIME_SCALE=1000000;
 
 const double MASS_SUN=1.989e30;
 const double MASS_MERCURY=3.285e23;
@@ -101,9 +101,9 @@ struct Vertex {
 };
 
 struct Planet {
-	std::vector<Vertex>vertices;
-	std::vector<unsigned int>indices;
-	float visual_radius;
+	std::vector<Vertex>ver;
+	std::vector<unsigned int>ind;
+	float radius;
 	double mass;
 	double x,y,z;
 	double vx,vy,vz;
@@ -125,8 +125,8 @@ struct Sput {
         std::string name;
 };
 */
-void vel_calculate(const std::vector<Planet*>& planets) {
-	for(const auto& planet:planets) {
+void vel_calculate(std::vector<Planet*>* planets) {
+	for(Planet* planet:*planets) {
 		if(planet->name=="Mercury") VEL_MERCURY=sqrt(2*((-G*MASS_SUN/(2*A_MERCURY))+(G*MASS_SUN/PERIHELION_MERCURY)));
                 else if(planet->name=="Venus") VEL_VENUS=sqrt(2*((-G*MASS_SUN/(2*A_VENUS))+(G*MASS_SUN/PERIHELION_VENUS)));
                 else if(planet->name=="Earth") VEL_EARTH=sqrt(2*((-G*MASS_SUN/(2*A_EARTH))+(G*MASS_SUN/PERIHELION_EARTH)));
@@ -136,52 +136,51 @@ void vel_calculate(const std::vector<Planet*>& planets) {
 
 
 // сфера
-void create_sphere(Planet& planet,float visual_radius,float r,float g,float b) {
-	planet.visual_radius=visual_radius;
-	int sectors=30;
-	int stacks=30;
+void create_sphere(Planet* planet,float radius,float r,float g,float b) {
+	planet->radius=radius;
+	int s=30;
 	
-	for(int i=0;i<=stacks;++i) {
-		float phi=M_PI*i/stacks;
-		for(int j=0;j<=sectors;++j) {
-			float theta=2.0f*M_PI*j/sectors;
+	for(int i=0;i<=s;++i) {
+		float phi=M_PI*i/s;
+		for(int j=0;j<=s;++j) {
+			float theta=2.0f*M_PI*j/s;
 			Vertex v;
-			v.x=visual_radius*sin(phi)*cos(theta);
-			v.y=visual_radius*cos(phi);
-			v.z=visual_radius*sin(phi)*sin(theta);
+			v.x=radius*sin(phi)*cos(theta);
+			v.y=radius*cos(phi);
+			v.z=radius*sin(phi)*sin(theta);
 			v.r=r;
 			v.g=g;
 			v.b=b;
-			planet.vertices.push_back(v);
+			(planet->ver).push_back(v);
 		}
 	}
 	
-	for(int i=0;i<stacks;++i) {
-		for(int j=0;j<sectors;++j) {
-			int first=i*(sectors+1)+j;
+	for(int i=0;i<s;++i) {
+		for(int j=0;j<s;++j) {
+			int first=i*(s+1)+j;
 			int second=first+1;
-			int third=first+(sectors+1);
+			int third=first+(s+1);
 			int fourth=third+1;
 			
-			planet.indices.push_back(first);
-			planet.indices.push_back(second);
-			planet.indices.push_back(third);
+			(planet->ind).push_back(first);
+			(planet->ind).push_back(second);
+			(planet->ind).push_back(third);
 			
-			planet.indices.push_back(second);
-			planet.indices.push_back(fourth);
-			planet.indices.push_back(third);
+			(planet->ind).push_back(second);
+			(planet->ind).push_back(fourth);
+			(planet->ind).push_back(third);
 		}
 	}
 }
 
 
 // отрисовка сферы
-void draw_planet(const Planet& planet) {
+void draw_planet(Planet* planet) {
 	glBegin(GL_TRIANGLES);
-	for(size_t i=0;i<planet.indices.size();++i) {
-		const Vertex& v=planet.vertices[planet.indices[i]];
-		glColor3f(v.r,v.g,v.b);
-		glVertex3f(v.x,v.y,v.z);
+	for(size_t i=0;i<(planet->ind).size();++i) {
+		Vertex* v=&(planet->ver[planet->ind[i]]);
+		glColor3f(v->r,v->g,v->b);
+		glVertex3f(v->x,v->y,v->z);
 	}
 	glEnd();
 }
@@ -270,7 +269,7 @@ void draw_orbit(float a, float eccentricity, float tilt, float r, float g, float
     	planet->ay=total_ay;
     	planet->az=total_az;
 } */
-void update_physics(Planet* planet, const std::vector<Planet*>& all_planets, double dt) {
+void update_physics(Planet* planet, std::vector<Planet*>* all_planets, double dt) {
     	planet->vx+=0.5*planet->ax*dt;
     	planet->vy+=0.5*planet->ay*dt;
     	planet->vz+=0.5*planet->az*dt;
@@ -278,7 +277,7 @@ void update_physics(Planet* planet, const std::vector<Planet*>& all_planets, dou
     	planet->y += planet->vy*dt;
     	planet->z+=planet->vz*dt;
     	double total_ax=0.0,total_ay = 0.0, total_az = 0.0;
-    	for(const auto& other:all_planets) {
+    	for(Planet* other:*all_planets) {
         	if(planet==other) continue;
         
         	double dx=other->x-planet->x;
@@ -308,12 +307,10 @@ void update_physics(Planet* planet, const std::vector<Planet*>& all_planets, dou
 
 
 // рендер
-void render_planet(const Planet* planet) {
+void render_planet(Planet* planet) {
 	glPushMatrix();
-	glTranslatef(static_cast<float>(planet->x*SCALE),
-				 static_cast<float>(planet->y*SCALE),
-				 static_cast<float>(planet->z*SCALE));
-	draw_planet(*planet);
+	glTranslatef(static_cast<float>(planet->x*SCALE), static_cast<float>(planet->y*SCALE), static_cast<float>(planet->z*SCALE));
+	draw_planet(planet);
 	glPopMatrix();
 }
 
@@ -355,9 +352,9 @@ void draw_coordinate_system() {
 
 
 // инит планет
-void initialize_planets(std::vector<Planet*>& planets) {
-	for(auto p:planets) delete p;
-	planets.clear();
+void initialize_planets(std::vector<Planet*>* planets) {
+	for(Planet* p:*planets) delete p;
+	planets->clear();
 //	for(auto p:sputs) delete p;
 //      sputs.clear();
 	Planet* sun=new Planet();
@@ -370,8 +367,8 @@ void initialize_planets(std::vector<Planet*>& planets) {
 	sun->orbit_eccentricity=0.0f;
 	sun->a=0.0f;
 	sun->orbit_tilt=0.0f;
-	create_sphere(*sun,RADIUS_SUN,COLOR_SUN[0],COLOR_SUN[1],COLOR_SUN[2]);
-	planets.push_back(sun);
+	create_sphere(sun,RADIUS_SUN,COLOR_SUN[0],COLOR_SUN[1],COLOR_SUN[2]);
+	planets->push_back(sun);
 	
 	Planet* mercury=new Planet();
 	mercury->name="Mercury";
@@ -383,8 +380,8 @@ void initialize_planets(std::vector<Planet*>& planets) {
 	mercury->orbit_eccentricity=EX_MERCURY;
         mercury->a=A_MERCURY;
         mercury->orbit_tilt=TILT_MERCURY;
-	create_sphere(*mercury,RADIUS_MERCURY,COLOR_MERCURY[0],COLOR_MERCURY[1],COLOR_MERCURY[2]);
-	planets.push_back(mercury);
+	create_sphere(mercury,RADIUS_MERCURY,COLOR_MERCURY[0],COLOR_MERCURY[1],COLOR_MERCURY[2]);
+	planets->push_back(mercury);
 	
 	Planet* venus=new Planet();
 	venus->name="Venus";
@@ -396,8 +393,8 @@ void initialize_planets(std::vector<Planet*>& planets) {
 	venus->orbit_eccentricity=EX_VENUS;
         venus->a=A_VENUS;
         venus->orbit_tilt=TILT_VENUS;
-	create_sphere(*venus,RADIUS_VENUS,COLOR_VENUS[0],COLOR_VENUS[1],COLOR_VENUS[2]);
-	planets.push_back(venus);
+	create_sphere(venus,RADIUS_VENUS,COLOR_VENUS[0],COLOR_VENUS[1],COLOR_VENUS[2]);
+	planets->push_back(venus);
 	
 	Planet* earth=new Planet();
 	earth->name="Earth";
@@ -409,8 +406,8 @@ void initialize_planets(std::vector<Planet*>& planets) {
 	earth->orbit_eccentricity=EX_EARTH;
         earth->a=A_EARTH;
         earth->orbit_tilt=TILT_EARTH;
-	create_sphere(*earth,RADIUS_EARTH,COLOR_EARTH[0],COLOR_EARTH[1],COLOR_EARTH[2]);
-	planets.push_back(earth);
+	create_sphere(earth,RADIUS_EARTH,COLOR_EARTH[0],COLOR_EARTH[1],COLOR_EARTH[2]);
+	planets->push_back(earth);
 	
 	Planet* mars=new Planet();
 	mars->name="Mars";
@@ -422,8 +419,8 @@ void initialize_planets(std::vector<Planet*>& planets) {
 	mars->orbit_eccentricity=EX_MARS;
         mars->a=A_MARS;
         mars->orbit_tilt=TILT_MARS;
-	create_sphere(*mars,RADIUS_MARS,COLOR_MARS[0],COLOR_MARS[1],COLOR_MARS[2]);
-	planets.push_back(mars);
+	create_sphere(mars,RADIUS_MARS,COLOR_MARS[0],COLOR_MARS[1],COLOR_MARS[2]);
+	planets->push_back(mars);
 
 
 
@@ -454,38 +451,12 @@ void initialize_planets(std::vector<Planet*>& planets) {
         mipt_1->vx=earth->vx; mipt_1->vy=VEL_MIPT_1; mipt_1->vz=VEL_MIPT_1+earth->vz;
         mipt_1->ax=0.0; mipt_1->ay=0.0; mipt_1->az=0.0;
 //      mars->orbit_radius=static_cast<float>(ORBIT_MARS*SCALE);
-        create_sphere(*mipt_1,RADIUS_MIPT_1,COLOR_MIPT_1[0],COLOR_MIPT_1[1],COLOR_MIPT_1[2]);
-        planets.push_back(mipt_1);
+        create_sphere(mipt_1,RADIUS_MIPT_1,COLOR_MIPT_1[0],COLOR_MIPT_1[1],COLOR_MIPT_1[2]);
+        planets->push_back(mipt_1);
 }
 
 
 
-
-
-
-void print_planet_info(const std::vector<Planet*>& planets) {
-    std::cout << "\n";
-    std::cout << "════════════════════════════════════════════════════════════════════\n";
-    std::cout << "                         ПАРАМЕТРЫ ПЛАНЕТ                         \n";
-    std::cout << "════════════════════════════════════════════════════════════════════\n";
-    
-    for(const auto& planet : planets) {
-        std::cout << "\n[" << planet->name << "]\n";
-        std::cout << "  Масса: " << planet->mass << " кг\n";
-        std::cout << "  Позиция: x=" << planet->x << " м, y=" << planet->y << " м, z=" << planet->z << " м\n";
-        std::cout << "  Скорость: vx=" << planet->vx << " м/с, vy=" << planet->vy << " м/с, vz=" << planet->vz << " м/с\n";
-        std::cout << "  Ускорение: ax=" << planet->ax << " м/с², ay=" << planet->ay << " м/с², az=" << planet->az << " м/с²\n";
-        if(planet->name != "Sun") {
-            std::cout << "  Орбитальные параметры:\n";
-            std::cout << "    Большая полуось: " << planet->a << " м\n";
-            std::cout << "    Эксцентриситет: " << planet->orbit_eccentricity << "\n";
-            std::cout << "    Наклон орбиты: " << planet->orbit_tilt << " рад\n";
-        }
-        std::cout << "  Визуальный радиус: " << planet->visual_radius << "\n";
-        std::cout << "  Вершин: " << planet->vertices.size() << ", индексов: " << planet->indices.size() << "\n";
-    }
-    std::cout << "════════════════════════════════════════════════════════════════════\n";
-}
 
 
 
@@ -516,13 +487,12 @@ struct Camera {
 
 Camera camera;
 bool cameraRotating= false;
-double lastMouseX=0.0, lastMouseY=0.0;
 
 
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     	if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-        	float cameraSpeed = 0.4f;
+        	float cameraSpeed = 0.2f;
         
         	if (key == GLFW_KEY_UP) camera.targetY += cameraSpeed;
         	if (key == GLFW_KEY_DOWN) camera.targetY -= cameraSpeed;
@@ -557,20 +527,72 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     	}
 }
 
+struct Tracker {
+    	double p_angle=0;
+    	double p_time=0;
+    	double period_start=0;
+    	int num_oborots=0;
+    	double current_period=0;
+    	bool has_period=false;
+    	double sum_angle=0;
 
+    	void update(double x, double z, double time) {
+        // 0 радиан против x
+        // π/2 радиан против z
+			time*=TIME_SCALE;
+        	double current_angle=atan2(z, x);
+        
+        	if (p_time==0) {
+            		p_angle=current_angle;
+            		p_time=time;
+            		return;
+        	}
+        	double angle_diff=current_angle-p_angle;
+        	sum_angle+=fabs(angle_diff);
+        
+        	if (sum_angle>=(4*M_PI)) {
+            		sum_angle-=4*M_PI;
+            		num_oborots++;
 
+            		if (num_oborots==1) {
+				period_start=time;
+				has_period=true;
+            		}
+            	}
+        	p_angle=current_angle;
+        	p_time=time;
+    	}
+    	double get_period() {
+        	return period_start;
+    	}
+    	bool ready() {
+        	return has_period;
+    	}
+	double get_angle() {
+		return sum_angle;
 
+	}
+};
 
+void print_data(Planet* planet, double t) {
+	std::cout<<planet->name<<":";
+	std::cout<<"vx: "<<planet->vx<<", vy: "<<planet->vy<<", vz: "<<planet->vz<<"\n";
+	std::cout<<"x: "<<planet->vx<<", y: "<<planet->y<<", z: "<<planet->z<<"\n";
+	std::cout<<"ax: "<<planet->ax<<", ay: "<<planet->ay<<", az: "<<planet->az<<"\n";
+	std::cout<<"mass: "<<planet->mass<<", a: "<<planet->a<<"\n";
+	std::cout<<"period: "<<t<<", t^2/a^3: "<<pow(t,2)/pow(planet->a,3)<<"\n";
+	std::cout<<"\n";
+}
 
 int main() {
 	if(!glfwInit()) {
-		std::cerr<<"Failed to initialize GLFW"<<std::endl;
+		std::cout<<"Failed to initialize GLFW"<<std::endl;
 		return -1;
 	}
 	
-	GLFWwindow* window=glfwCreateWindow(1200,800,"Solar System Simulation",NULL,NULL);
+	GLFWwindow* window=glfwCreateWindow(1200,800,"Солнечная система",NULL,NULL);
 	if(!window) {
-		std::cerr<<"Failed to create GLFW window"<<std::endl;
+		std::cout<<"Failed to create GLFW window"<<std::endl;
 		glfwTerminate();
 		return -1;
 	}
@@ -578,7 +600,7 @@ int main() {
 	glfwMakeContextCurrent(window);
 	
 	if(glewInit()!=GLEW_OK) {
-		std::cerr<<"Failed to initialize GLEW"<<std::endl;
+		std::cout<<"Failed to initialize GLEW"<<std::endl;
 		return -1;
 	}
 
@@ -587,7 +609,7 @@ int main() {
     	camera.update();
 	
 	std::vector<Planet*>planets;
-	initialize_planets(planets);
+	initialize_planets(&planets);
 
 
 
@@ -596,25 +618,71 @@ int main() {
 	glClearColor(0.0f,0.0f,0.05f,1.0f);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-	vel_calculate(planets);
-	for(auto planet:planets) {
+
+
+	vel_calculate(&planets);
+
+
+	for(Planet* planet:planets) {
 		if(planet->name=="Mercury") planet->vz=VEL_MERCURY;
 		else if(planet->name=="Venus") planet->vz=VEL_VENUS;
 		else if(planet->name=="Earth") planet->vz=VEL_EARTH;
 		else if(planet->name=="Mars") planet->vz=VEL_MARS;
 	}
 	double last_time=glfwGetTime();
-	print_planet_info(planets);
+	
+	Tracker mercury_tracker;
+	Tracker venus_tracker;
+	Tracker earth_tracker;
+	Tracker mars_tracker;
+	double period_mercury=0,period_venus=0,period_earth=0,period_mars=0;
+	
 	while(!glfwWindowShouldClose(window)) {
 		double current_time=glfwGetTime();
 		double delta_time=current_time-last_time;
 		last_time=current_time;
 		
 		double dt=delta_time*TIME_SCALE;
-		for(auto& planet:planets) {
-			update_physics(planet,planets,dt);
+		for(Planet* planet:planets) {
+			update_physics(planet,&planets,dt);
 		}
-		
+
+
+		for(Planet* planet:planets) {
+    			if(planet->name=="Mercury") {
+        			mercury_tracker.update(planet->x, planet->z, current_time);
+        			if(mercury_tracker.ready()) {
+
+            				period_mercury=mercury_tracker.get_period();
+        			}
+    			}
+			if(planet->name=="Venus") {
+                                venus_tracker.update(planet->x, planet->z, current_time);
+
+                                if(venus_tracker.ready()) {
+
+                                        period_venus=venus_tracker.get_period();
+                                }
+                        }
+
+			if(planet->name=="Earth") {
+                                earth_tracker.update(planet->x, planet->z, current_time);
+
+                                if(earth_tracker.ready()) {
+
+                                        period_earth=earth_tracker.get_period();
+                                }
+                        }
+			if(planet->name=="Mars") {
+                                mars_tracker.update(planet->x, planet->z, current_time);
+
+                                if(mars_tracker.ready()) {
+
+                                        period_mars=mars_tracker.get_period();
+                                }
+                        }
+		}
+
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 		
 		int width,height;
@@ -640,26 +708,32 @@ int main() {
 
 		
 
-		for(const auto& planet:planets) {
+		for(Planet* planet:planets) {
 			if(planet->name=="Mercury") draw_orbit(planet->a,planet->orbit_eccentricity,TILT_MERCURY,0.5f,0.5f,0.5f);
 			else if(planet->name=="Venus") draw_orbit(planet->a,planet->orbit_eccentricity,TILT_VENUS,1.0f,0.8f,0.4f);
 			else if(planet->name=="Earth") draw_orbit(planet->a,planet->orbit_eccentricity,TILT_EARTH,0.3f,0.3f,0.8f);
 			else if(planet->name=="Mars") draw_orbit(planet->a,planet->orbit_eccentricity,TILT_MARS,0.8f,0.3f,0.2f);
 			
 		}
+		for(Planet* planet:planets) {
+			if(planet->name=="Mercury") {print_data(planet, period_mercury);}
+			else if(planet->name=="Venus") {print_data(planet,period_venus);}
+			else if(planet->name=="Earth") {print_data(planet,period_earth);}
+			else if(planet->name=="Mars") {print_data(planet,period_mars);}
+			else if(planet->name=="Sun") {print_data(planet,0);}
+		}
 		glEnable(GL_DEPTH_TEST);
 		glLineWidth(1.0f);
 		
-		for(const auto& planet:planets) {
+		for(Planet* planet:planets) {
 			render_planet(planet);
 		}
 		glfwSwapBuffers(window);
 		glfwPollEvents();
-		print_planet_info(planets);
-		usleep(20000);
+//		usleep(20000);
 	}
 	
-	for(auto p:planets) delete p;
+	for(Planet* p:planets) delete p;
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	std::cout<<std::endl<<"система энд"<<std::endl;
