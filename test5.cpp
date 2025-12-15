@@ -87,10 +87,10 @@ const double PERIHELION_NEPTUN=A_NEPTUN*(1-EX_NEPTUN);
 
 
 const float RADIUS_SUN=0.15f;
-const float RADIUS_MERCURY=0.04f;
-const float RADIUS_VENUS=0.05f;
-const float RADIUS_EARTH=0.07f;
-const float RADIUS_MARS=0.06f;
+const float RADIUS_MERCURY=0.03f;
+const float RADIUS_VENUS=0.04f;
+const float RADIUS_EARTH=0.05f;
+const float RADIUS_MARS=0.04f;
 const float RADIUS_JUPITER=0.12f;
 const float RADIUS_SATURN=0.1f;
 const float RADIUS_URAN=0.08f;
@@ -518,8 +518,8 @@ void initialize_planets(std::vector<Planet*>* planets) {
 	Planet* mipt_1=new Planet();
         mipt_1->name="MIPT_1";
         mipt_1->mass=MASS_MIPT_1;
-        mipt_1->x=earth->x+MIPT_1_ORBIT_RADIUS; mipt_1->y=0.0; mipt_1->z=earth->z;
-        mipt_1->vx=earth->vx; mipt_1->vy=VEL_MIPT_1; mipt_1->vz=VEL_MIPT_1+earth->vz;
+        mipt_1->x=PERIHELION_EARTH+MIPT_1_ORBIT_RADIUS; mipt_1->y=0.0; mipt_1->z=0.0;
+        mipt_1->vx=0; mipt_1->vy=0; mipt_1->vz=0;
         mipt_1->ax=0.0; mipt_1->ay=0.0; mipt_1->az=0.0;
 //      mars->orbit_radius=static_cast<float>(ORBIT_MARS*SCALE);
         create_sphere(mipt_1,RADIUS_MIPT_1,COLOR_MIPT_1[0],COLOR_MIPT_1[1],COLOR_MIPT_1[2]);
@@ -647,7 +647,7 @@ struct Tracker {
 void print_data(Planet* planet, double t) {
 	std::cout<<planet->name<<":";
 	std::cout<<"vx: "<<planet->vx<<", vy: "<<planet->vy<<", vz: "<<planet->vz<<"\n";
-	std::cout<<"x: "<<planet->vx<<", y: "<<planet->y<<", z: "<<planet->z<<"\n";
+	std::cout<<"x: "<<planet->x<<", y: "<<planet->y<<", z: "<<planet->z<<"\n";
 	std::cout<<"ax: "<<planet->ax<<", ay: "<<planet->ay<<", az: "<<planet->az<<"\n";
 	std::cout<<"mass: "<<planet->mass<<", a: "<<planet->a<<"\n";
 	std::cout<<"period: "<<t<<", t^2/a^3: "<<pow(t,2)/pow(planet->a,3)<<"\n";
@@ -694,14 +694,15 @@ int main() {
 
 
 	for(Planet* planet:planets) {
-		if(planet->name=="Mercury") {planet->vz=VEL_MERCURY;planet->vy=VEL_MERCURY*sin(TILT_MERCURY);}
-		else if(planet->name=="Venus") {planet->vz=VEL_VENUS;planet->vy=VEL_VENUS*sin(TILT_VENUS);}
-		else if(planet->name=="Earth") {planet->vz=VEL_EARTH;planet->vy=VEL_EARTH*sin(TILT_EARTH);}
-		else if(planet->name=="Mars") {planet->vz=VEL_MARS;planet->vy=VEL_MARS*sin(TILT_MARS);}
-		else if(planet->name=="Jupiter") {planet->vz=VEL_JUPITER;planet->vy=VEL_JUPITER*sin(TILT_JUPITER);}
-		else if(planet->name=="Saturn") {planet->vz=VEL_SATURN;planet->vy=VEL_SATURN*sin(TILT_SATURN);}
-		else if(planet->name=="Uran") {planet->vz=VEL_URAN;planet->vy=VEL_URAN*sin(TILT_URAN);}
-		else if(planet->name=="Neptun") {planet->vz=VEL_NEPTUN;planet->vy=VEL_NEPTUN*sin(TILT_NEPTUN);}
+		if(planet->name=="Mercury") {planet->vz=VEL_MERCURY*cos(TILT_MERCURY);planet->vy=VEL_MERCURY*sin(TILT_MERCURY);}
+		else if(planet->name=="Venus") {planet->vz=VEL_VENUS*cos(TILT_VENUS);planet->vy=VEL_VENUS*sin(TILT_VENUS);}
+		else if(planet->name=="Earth") {planet->vz=VEL_EARTH*cos(TILT_EARTH);planet->vy=VEL_EARTH*sin(TILT_EARTH);}
+		else if(planet->name=="Mars") {planet->vz=VEL_MARS*cos(TILT_MARS);planet->vy=VEL_MARS*sin(TILT_MARS);}
+		else if(planet->name=="Jupiter") {planet->vz=VEL_JUPITER*cos(TILT_JUPITER);planet->vy=VEL_JUPITER*sin(TILT_JUPITER);}
+		else if(planet->name=="Saturn") {planet->vz=VEL_SATURN*cos(TILT_SATURN);planet->vy=VEL_SATURN*sin(TILT_SATURN);}
+		else if(planet->name=="Uran") {planet->vz=VEL_URAN*cos(TILT_URAN);planet->vy=VEL_URAN*sin(TILT_URAN);}
+		else if(planet->name=="Neptun") {planet->vz=VEL_NEPTUN*cos(TILT_NEPTUN);planet->vy=VEL_NEPTUN*sin(TILT_NEPTUN);}
+		else if(planet->name=="MIPT_1") {planet->vz=(VEL_MIPT_1+VEL_EARTH)*cos(TILT_EARTH);planet->vy=(VEL_MIPT_1+VEL_EARTH)*sin(TILT_EARTH);}
 	}
 	double last_time=glfwGetTime();
 	
@@ -725,6 +726,7 @@ int main() {
 		else if(planet->name=="Uran") {print_data(planet,period_uran);}
 		else if(planet->name=="Neptun") {print_data(planet,period_neptun);}
                 else if(planet->name=="Sun") {print_data(planet,0);}
+		else if(planet->name=="MIPT_1") {print_data(planet,0);}
         }
 	while(!glfwWindowShouldClose(window)) {
 		double current_time=glfwGetTime();
@@ -850,7 +852,7 @@ int main() {
 			else if(planet->name=="Uran") {print_data(planet,period_uran);}
 			else if(planet->name=="Neptun") {print_data(planet,period_neptun);}
 			else if(planet->name=="Sun") {print_data(planet,0);}
-		} 
+		}
 		glEnable(GL_DEPTH_TEST);
 		glLineWidth(1.0f);
 		
