@@ -22,15 +22,13 @@ void createPlanet(Planet& planet,float radius) {
 			v.x=radius*sin(phi)*cos(theta);
 			v.y=radius*cos(phi);
 			v.z=radius*sin(phi)*sin(theta);
-			 // ВМЕСТО ОДНОГО ЦВЕТА - вычисляем нормаль для освещения
             float nx = sin(phi) * cos(theta);
             float ny = cos(phi);
             float nz = sin(phi) * sin(theta);
             
-            // Простое освещение по нормали Y
-            float light = (ny + 1.0f) * 0.5f; // от 0 до 1
+            float light = (ny + 1.0f) * 0.5f;
             
-            v.r = light * 0.8f;  // цвет с освещением
+            v.r = light * 0.8f;
             v.g = light * 0.5f;
             v.b = light * 0.2f;
 			planet.vertices.push_back(v);
@@ -93,16 +91,14 @@ Planet planet;
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         float aspect = (float)width / (float)height;
-//        gluPerspective(45.0f, aspect, 0.1f, 100.0f);
   glFrustum(-0.1 * aspect, 0.1 * aspect, -0.1, 0.1, 0.1, 100.0);      
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         
-        // Позиция камеры
-        glTranslatef(0.0f, 0.0f, -5.0f);  // отодвигаем камеру
+        glTranslatef(0.0f, 0.0f, -5.0f);
 	glRotatef(30.0f, 1.0f, 0.0f, 0.0f);        
          rotationAngle += 10.0f;
-        glRotatef(rotationAngle, 0.0f, 1.0f, 0.0f);  // вращение вокруг оси Y
+        glRotatef(rotationAngle, 0.0f, 1.0f, 0.0f);
 	        drawPlanet(planet);
         
         glfwSwapBuffers(window);

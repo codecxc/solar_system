@@ -162,10 +162,9 @@ int main() {
         	glMatrixMode(GL_MODELVIEW);
         	glLoadIdentity();
         
-        // Камера
-        gluLookAt(0.0f, 5.0f, 8.0f,   // Позиция камеры
-                  0.0f, 0.0f, 0.0f,   // Смотрим на центр
-                  0.0f, 1.0f, 0.0f);  // Вектор "вверх"
+        gluLookAt(0.0f, 5.0f, 8.0f,
+                  0.0f, 0.0f, 0.0f,
+                  0.0f, 1.0f, 0.0f);
         
         	draw_coordinate();
         
