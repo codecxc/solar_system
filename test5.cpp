@@ -8,17 +8,19 @@
 // const
 const double AU=1.496e11;
 const double G=6.67430e-11;
-const double SCALE=1.0/AU*30;
-const double TIME_SCALE=86400;
+const double SCALE=1.0/AU;
+const double TIME_SCALE=86400*10;
 
-const double MASS_SUN=1.989e30;
-const double MASS_MERCURY=3.285e23;
-const double MASS_VENUS=4.867e24;
-const double MASS_EARTH=5.972e24;
+const double MASS_SUN=1.9891e30;
+const double MASS_MERCURY=3.302e23;
+const double MASS_VENUS=4.868e24;
+const double MASS_EARTH=5.9736e24;
 //const double MASS_EARTH=5.972e40;
-const double MASS_MARS=6.39e23;
-const double MASS_JUPITER=1.898e27;
-const double MASS_SATURN=5.683e26;
+const double MASS_MARS=6.4185e23;
+const double MASS_JUPITER=1.8986e27;
+const double MASS_SATURN=5.68460e26;
+const double MASS_URAN=8.6832e25;
+const double MASS_NEPTUN=1.02430e26;
 const double MASS_MIPT_1=440075;
 
 
@@ -40,7 +42,7 @@ const double VEL_JUPITER=0.0;
 const double VEL_SATURN=0.0;
 */
 
-double VEL_MERCURY, VEL_VENUS, VEL_EARTH, VEL_MARS;
+double VEL_MERCURY, VEL_VENUS, VEL_EARTH, VEL_MARS, VEL_JUPITER, VEL_SATURN, VEL_URAN, VEL_NEPTUN;
 
 
 const float EX_SUN=0.0f;
@@ -50,6 +52,9 @@ const float EX_EARTH=0.017f;
 const float EX_MARS=0.093f;
 const float EX_JUPITER=0.049f;
 const float EX_SATURN=0.057f;
+const float EX_URAN=0.046f;
+const float EX_NEPTUN=0.011f;
+
 
 
 const float A_SUN=0.0f;
@@ -59,6 +64,8 @@ const float A_EARTH=1.000*AU;
 const float A_MARS=1.524*AU;
 const float A_JUPITER=5.2044*AU;
 const float A_SATURN=9.5826*AU;
+const float A_URAN=19.21840*AU;
+const float A_NEPTUN=30.11000*AU;
 
 const float TILT_MERCURY=7.01f*M_PI / 180.0f;
 const float TILT_VENUS=3.39f*M_PI / 180.0f;
@@ -66,21 +73,29 @@ const float TILT_EARTH=0.0f;
 const float TILT_MARS=1.85f*M_PI / 180.0f;
 const float TILT_JUPITER=1.31f*M_PI / 180.0f;
 const float TILT_SATURN=2.49f*M_PI / 180.0f;
+const float TILT_URAN=0.77f*M_PI / 180.0f;
+const float TILT_NEPTUN=1.77f*M_PI / 180.0f;
 
 const double PERIHELION_MERCURY=A_MERCURY*(1-EX_MERCURY);
 const double PERIHELION_VENUS=A_VENUS*(1-EX_VENUS);
 const double PERIHELION_EARTH=A_EARTH*(1-EX_EARTH);
 const double PERIHELION_MARS=A_MARS*(1-EX_MARS);
+const double PERIHELION_JUPITER=A_JUPITER*(1-EX_JUPITER);
+const double PERIHELION_SATURN=A_SATURN*(1-EX_SATURN);
+const double PERIHELION_URAN=A_URAN*(1-EX_URAN);
+const double PERIHELION_NEPTUN=A_NEPTUN*(1-EX_NEPTUN);
 
 
-const float RADIUS_SUN=0.4f;
-const float RADIUS_MERCURY=0.08f;
-const float RADIUS_VENUS=0.12f;
-const float RADIUS_EARTH=0.15f;
-const float RADIUS_MARS=0.10f;
-const float RADIUS_JUPITER=0.35f;
-const float RADIUS_SATURN=0.3f;
-const float RADIUS_MIPT_1=0.1;
+const float RADIUS_SUN=0.15f;
+const float RADIUS_MERCURY=0.04f;
+const float RADIUS_VENUS=0.05f;
+const float RADIUS_EARTH=0.07f;
+const float RADIUS_MARS=0.06f;
+const float RADIUS_JUPITER=0.12f;
+const float RADIUS_SATURN=0.1f;
+const float RADIUS_URAN=0.08f;
+const float RADIUS_NEPTUN=0.07f;
+const float RADIUS_MIPT_1=0.02;
 
 const float COLOR_SUN[3]={1.0f,1.0f,0.0f};
 const float COLOR_MERCURY[3]={0.7f,0.7f,0.7f};
@@ -89,6 +104,8 @@ const float COLOR_EARTH[3]={0.0f,0.5f,1.0f};
 const float COLOR_MARS[3]={1.0f,0.3f,0.1f};
 const float COLOR_JUPITER[3]={0.9f,0.7f,0.5f};
 const float COLOR_SATURN[3]={0.95f,0.85f,0.6f};
+const float COLOR_NEPTUN[3]={0.1f,0.2f,0.0f};
+const float COLOR_URAN[3]={0.15f,0.35f,0.6f};
 const float COLOR_MIPT_1[3]={0.5f,0.55f,0.7f};
 
 const double MASS_ASTEROID=1.0e19;
@@ -127,12 +144,16 @@ struct Sput {
 };
 */
 
-void vel_calculate(std::vector<Planet*>* planets) {
+void vel_calc(std::vector<Planet*>* planets) {
 	for(Planet* planet:*planets) {
 		if(planet->name=="Mercury") VEL_MERCURY=sqrt(2*((-G*MASS_SUN/(2*A_MERCURY))+(G*MASS_SUN/PERIHELION_MERCURY)));
                 else if(planet->name=="Venus") VEL_VENUS=sqrt(2*((-G*MASS_SUN/(2*A_VENUS))+(G*MASS_SUN/PERIHELION_VENUS)));
                 else if(planet->name=="Earth") VEL_EARTH=sqrt(2*((-G*MASS_SUN/(2*A_EARTH))+(G*MASS_SUN/PERIHELION_EARTH)));
                 else if(planet->name=="Mars") VEL_MARS=sqrt(2*((-G*MASS_SUN/(2*A_MARS))+(G*MASS_SUN/PERIHELION_MARS)));
+		else if(planet->name=="Jupiter") VEL_JUPITER=sqrt(2*((-G*MASS_SUN/(2*A_JUPITER))+(G*MASS_SUN/PERIHELION_JUPITER)));
+		else if(planet->name=="Saturn") VEL_SATURN=sqrt(2*((-G*MASS_SUN/(2*A_SATURN))+(G*MASS_SUN/PERIHELION_SATURN)));
+		else if(planet->name=="Uran") VEL_URAN=sqrt(2*((-G*MASS_SUN/(2*A_URAN))+(G*MASS_SUN/PERIHELION_URAN)));
+		else if(planet->name=="Neptun") VEL_NEPTUN=sqrt(2*((-G*MASS_SUN/(2*A_NEPTUN))+(G*MASS_SUN/PERIHELION_NEPTUN)));
         }
 }
 
@@ -311,7 +332,7 @@ void update_physics(Planet* planet, std::vector<Planet*>* all_planets, double dt
 // рендер
 void render_planet(Planet* planet) {
 	glPushMatrix();
-	glTranslatef(static_cast<float>(planet->x*SCALE), static_cast<float>(planet->y*SCALE), static_cast<float>(planet->z*SCALE));
+	glTranslatef(float(planet->x*SCALE), float(planet->y*SCALE), float(planet->z*SCALE));
 	draw_planet(planet);
 	glPopMatrix();
 }
@@ -425,7 +446,55 @@ void initialize_planets(std::vector<Planet*>* planets) {
 	planets->push_back(mars);
 
 
+	Planet* jupiter=new Planet();
+        jupiter->name="Jupiter";
+        jupiter->mass=MASS_JUPITER;
+        jupiter->x=PERIHELION_JUPITER; jupiter->y=0.0; jupiter->z=0.0;
+        jupiter->vx=0.0; jupiter->vy=VEL_JUPITER*sin(TILT_JUPITER); jupiter->vz=VEL_JUPITER;
+        jupiter->ax=0.0; jupiter->ay=0.0; jupiter->az=0.0;
+//      mars->orbit_radius=static_cast<float>(ORBIT_MARS*SCALE);
+        jupiter->orbit_eccentricity=EX_JUPITER;
+        jupiter->a=A_JUPITER;
+        jupiter->orbit_tilt=TILT_JUPITER;
+        create_sphere(jupiter,RADIUS_JUPITER,COLOR_JUPITER[0],COLOR_JUPITER[1],COLOR_JUPITER[2]);
+        planets->push_back(jupiter);
 
+
+	Planet* saturn=new Planet();
+	saturn->name="Saturn";
+	saturn->mass=MASS_SATURN;
+	saturn->x=PERIHELION_SATURN; saturn->y=0.0; saturn->z=0.0;
+	saturn->vx=0.0; saturn->vy=VEL_SATURN*sin(TILT_SATURN); saturn->vz=VEL_SATURN;
+	saturn->ax=0.0; saturn->ay=0.0; saturn->az=0.0;
+	saturn->orbit_eccentricity=EX_SATURN;
+	saturn->a=A_SATURN;
+	saturn->orbit_tilt=TILT_SATURN;
+	create_sphere(saturn,RADIUS_SATURN,COLOR_SATURN[0],COLOR_SATURN[1],COLOR_SATURN[2]);
+	planets->push_back(saturn);
+
+	Planet* uran=new Planet();
+	uran->name="Uran";
+	uran->mass=MASS_URAN;
+	uran->x=PERIHELION_URAN; uran->y=0.0; uran->z=0.0;
+	uran->vx=0.0; uran->vy=VEL_URAN*sin(TILT_URAN); uran->vz=VEL_URAN;
+	uran->ax=0.0; uran->ay=0.0; uran->az=0.0;
+	uran->orbit_eccentricity=EX_URAN;
+	uran->a=A_URAN;
+	uran->orbit_tilt=TILT_URAN;
+	create_sphere(uran,RADIUS_URAN,COLOR_URAN[0],COLOR_URAN[1],COLOR_URAN[2]);
+	planets->push_back(uran);
+
+	Planet* neptun=new Planet();
+	neptun->name="Neptun";
+	neptun->mass=MASS_NEPTUN;
+	neptun->x=PERIHELION_NEPTUN; neptun->y=0.0; neptun->z=0.0;
+	neptun->vx=0.0; neptun->vy=VEL_NEPTUN*sin(TILT_NEPTUN); neptun->vz=VEL_NEPTUN;
+	neptun->ax=0.0; neptun->ay=0.0; neptun->az=0.0;
+	neptun->orbit_eccentricity=EX_NEPTUN;
+	neptun->a=A_NEPTUN;
+	neptun->orbit_tilt=TILT_NEPTUN;
+	create_sphere(neptun,RADIUS_NEPTUN,COLOR_NEPTUN[0],COLOR_NEPTUN[1],COLOR_NEPTUN[2]);
+	planets->push_back(neptun);
 	/*Planet* jupiter=new Planet();
 	jupiter->name="Jupiter";
 	jupiter->mass=MASS_JUPITER;
@@ -473,12 +542,12 @@ struct Camera {
     	float distance;
     	float angleX, angleY;
         Camera() {
-        	posX = 30.0f; posY = 20.0f; posZ = 30.0f;
+        	posX = 30.0f; posY = 80.0f; posZ = 30.0f;
         	targetX = 0.0f; targetY = 0.0f; targetZ = 0.0f;
         	upX = 0.0f; upY = 1.0f; upZ = 0.0f;
         	distance = 50.0f;
         	angleX = 0.0f;
-        	angleY = 0.0f;
+        	angleY = 0.3f;
     	}
     	void update() {
         	posX = targetX + distance * cos(angleY) * sin(angleX);
@@ -503,11 +572,11 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         	if (key == GLFW_KEY_S) camera.targetZ += cameraSpeed;
         
         	if (key == GLFW_KEY_R) {
-            		camera.posX = 30.0f; camera.posY = 20.0f; camera.posZ = 30.0f;
+            		camera.posX = 30.0f; camera.posY = 80.0f; camera.posZ = 30.0f;
             		camera.targetX = 0.0f; camera.targetY = 0.0f; camera.targetZ = 0.0f;
-            		camera.distance = 50.0f;
+            		camera.distance = 30.0f;
             		camera.angleX = 0.0f;
-            		camera.angleY = 0.0f;
+            		camera.angleY = 0.3f;
             		camera.update();
         	}
         
@@ -621,7 +690,7 @@ int main() {
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
 
-	vel_calculate(&planets);
+	vel_calc(&planets);
 
 
 	for(Planet* planet:planets) {
@@ -629,6 +698,10 @@ int main() {
 		else if(planet->name=="Venus") {planet->vz=VEL_VENUS;planet->vy=VEL_VENUS*sin(TILT_VENUS);}
 		else if(planet->name=="Earth") {planet->vz=VEL_EARTH;planet->vy=VEL_EARTH*sin(TILT_EARTH);}
 		else if(planet->name=="Mars") {planet->vz=VEL_MARS;planet->vy=VEL_MARS*sin(TILT_MARS);}
+		else if(planet->name=="Jupiter") {planet->vz=VEL_JUPITER;planet->vy=VEL_JUPITER*sin(TILT_JUPITER);}
+		else if(planet->name=="Saturn") {planet->vz=VEL_SATURN;planet->vy=VEL_SATURN*sin(TILT_SATURN);}
+		else if(planet->name=="Uran") {planet->vz=VEL_URAN;planet->vy=VEL_URAN*sin(TILT_URAN);}
+		else if(planet->name=="Neptun") {planet->vz=VEL_NEPTUN;planet->vy=VEL_NEPTUN*sin(TILT_NEPTUN);}
 	}
 	double last_time=glfwGetTime();
 	
@@ -636,12 +709,21 @@ int main() {
 	Tracker venus_tracker;
 	Tracker earth_tracker;
 	Tracker mars_tracker;
-	double period_mercury=0,period_venus=0,period_earth=0,period_mars=0;
+	
+	Tracker jupiter_tracker;
+        Tracker saturn_tracker;
+        Tracker uran_tracker;
+        Tracker neptun_tracker;
+	double period_mercury=0,period_venus=0,period_earth=0,period_mars=0,period_jupiter=0,period_saturn=0,period_uran=0,period_neptun=0;
 	for(Planet* planet:planets) {
                	if(planet->name=="Mercury") {print_data(planet, period_mercury);}
                 else if(planet->name=="Venus") {print_data(planet,period_venus);}
                 else if(planet->name=="Earth") {print_data(planet,period_earth);}
         	else if(planet->name=="Mars") {print_data(planet,period_mars);}
+		else if(planet->name=="Jupiter") {print_data(planet,period_jupiter);}
+		else if(planet->name=="Saturn") {print_data(planet,period_saturn);}
+		else if(planet->name=="Uran") {print_data(planet,period_uran);}
+		else if(planet->name=="Neptun") {print_data(planet,period_neptun);}
                 else if(planet->name=="Sun") {print_data(planet,0);}
         }
 	while(!glfwWindowShouldClose(window)) {
@@ -688,6 +770,38 @@ int main() {
                                         period_mars=mars_tracker.get_period();
                                 }
                         }
+			if(planet->name=="Jupiter") {
+                                jupiter_tracker.update(planet->x, planet->z, current_time);
+
+                                if(jupiter_tracker.ready()) {
+
+                                        period_jupiter=jupiter_tracker.get_period();
+                                }
+                        }
+			if(planet->name=="Saturn") {
+                                saturn_tracker.update(planet->x, planet->z, current_time);
+
+                                if(saturn_tracker.ready()) {
+
+                                        period_saturn=saturn_tracker.get_period();
+                                }
+                        }
+			if(planet->name=="Uran") {
+                                uran_tracker.update(planet->x, planet->z, current_time);
+
+                                if(uran_tracker.ready()) {
+
+                                        period_uran=uran_tracker.get_period();
+                                }
+                        }
+			if(planet->name=="Neptun") {
+                                neptun_tracker.update(planet->x, planet->z, current_time);
+
+                                if(neptun_tracker.ready()) {
+
+                                        period_neptun=neptun_tracker.get_period();
+                                }
+                        }
 		}
 
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -720,6 +834,10 @@ int main() {
 			else if(planet->name=="Venus") draw_orbit(planet->a,planet->orbit_eccentricity,TILT_VENUS,1.0f,0.8f,0.4f);
 			else if(planet->name=="Earth") draw_orbit(planet->a,planet->orbit_eccentricity,TILT_EARTH,0.3f,0.3f,0.8f);
 			else if(planet->name=="Mars") draw_orbit(planet->a,planet->orbit_eccentricity,TILT_MARS,0.8f,0.3f,0.2f);
+			else if(planet->name=="Jupiter") draw_orbit(planet->a,planet->orbit_eccentricity,TILT_JUPITER,1.0f,0.4f,0.5f);
+			else if(planet->name=="Saturn") draw_orbit(planet->a,planet->orbit_eccentricity,TILT_SATURN,0.2f,0.7f,1.0f);
+			else if(planet->name=="Uran") draw_orbit(planet->a,planet->orbit_eccentricity,TILT_URAN,0.45f,0.85f,0.15f);
+			else if(planet->name=="Neptun") draw_orbit(planet->a,planet->orbit_eccentricity,TILT_NEPTUN,0.12f,0.95f,1.0f);
 			
 		}
 		for(Planet* planet:planets) {
@@ -727,6 +845,10 @@ int main() {
 			else if(planet->name=="Venus") {print_data(planet,period_venus);}
 			else if(planet->name=="Earth") {print_data(planet,period_earth);}
 			else if(planet->name=="Mars") {print_data(planet,period_mars);}
+			else if(planet->name=="Jupiter") {print_data(planet,period_jupiter);}
+			else if(planet->name=="Saturn") {print_data(planet,period_saturn);}
+			else if(planet->name=="Uran") {print_data(planet,period_uran);}
+			else if(planet->name=="Neptun") {print_data(planet,period_neptun);}
 			else if(planet->name=="Sun") {print_data(planet,0);}
 		} 
 		glEnable(GL_DEPTH_TEST);
