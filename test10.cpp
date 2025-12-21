@@ -89,7 +89,7 @@ const double PERIHELION_NEPTUN=A_NEPTUN*(1-EX_NEPTUN);
 const float RADIUS_SUN=0.15f;
 const float RADIUS_MERCURY=0.03f;
 const float RADIUS_VENUS=0.04f;
-const float RADIUS_EARTH=0.01f;
+const float RADIUS_EARTH=0.008f;
 const float RADIUS_MARS=0.04f;
 const float RADIUS_JUPITER=0.12f;
 const float RADIUS_SATURN=0.1f;
@@ -129,6 +129,61 @@ const float COLOR_LUNA[3]={1.0f, 1.0f, 1.0f};
 
 
 
+struct TrailPoint {
+    double x, y, z;
+    float r, g, b;
+    double time;
+};
+
+struct Trail {
+    std::vector<TrailPoint> points;
+    int maxPoints;
+    float width;
+    float startAlpha;
+    float endAlpha;
+    
+    Trail(int max = 500, float w = 2.0f, float startA = 0.1f, float endA = 1.0f) 
+        : maxPoints(max), width(w), startAlpha(startA), endAlpha(endA) {}
+    
+    void addPoint(double x, double y, double z, float r, float g, float b) {
+        TrailPoint point;
+        point.x = x;
+        point.y = y;
+        point.z = z;
+        point.r = r;
+        point.g = g;
+        point.b = b;
+        point.time = glfwGetTime();
+        points.push_back(point);
+        
+        if(points.size() > maxPoints) {
+            points.erase(points.begin());
+        }
+    }
+    
+    void draw() {
+        if(points.size() < 2) return;
+        
+        glLineWidth(width);
+        glBegin(GL_LINE_STRIP);
+        
+        for(size_t i = 0; i < points.size(); ++i) {
+
+            float t = (float)i / (points.size() - 1);
+            float alpha = startAlpha + (endAlpha - startAlpha) * t;
+            
+            glColor3f(points[i].r * alpha, 
+                      points[i].g * alpha, 
+                      points[i].b * alpha);
+            glVertex3f(float(points[i].x * SCALE), 
+                      float(points[i].y * SCALE), 
+                      float(points[i].z * SCALE));
+        }
+        
+        glEnd();
+        glLineWidth(1.0f);
+    }
+};
 
 struct Vertex {
 	float x,y,z;
@@ -149,6 +204,7 @@ struct Planet {
 	float orbit_tilt; // угол наклона орбиты
 	bool is_sputnik=false;
 	std::string parent;
+    Trail trail;
 };
 
 /*
@@ -177,6 +233,7 @@ void vel_calc(std::vector<Planet*>* planets) {
 		else if(planet->name=="luna") VEL_LUNA=sqrt(G*MASS_EARTH/LUNA_ORBIT_RADIUS);
         }
 }
+
 
 
 // сфера
@@ -545,6 +602,7 @@ void initialize_planets(std::vector<Planet*>* planets) {
 //      mars->orbit_radius=static_cast<float>(ORBIT_MARS*SCALE);
 	luna->is_sputnik=true;
 	luna->parent="Earth";
+    luna->trail = Trail(500, 2.0f); 
         create_sphere(luna,RADIUS_LUNA,COLOR_LUNA[0],COLOR_LUNA[1],COLOR_LUNA[2]);
         planets->push_back(luna);
 }
@@ -762,6 +820,18 @@ int main() {
 		}
 
 
+for(Planet* planet:planets) {
+        if(planet->name == "luna") {
+
+            static int counter = 0;
+            if(counter++ % 10 == 0) {
+                planet->trail.addPoint(planet->x, planet->y, planet->z,
+                                      COLOR_LUNA[0], COLOR_LUNA[1], COLOR_LUNA[2]);
+            }
+            break;
+        }
+    }
+
 		for(Planet* planet:planets) {
     			if(planet->name=="Mercury") {
         			mercury_tracker.update(planet->x, planet->z, current_time);
@@ -880,9 +950,19 @@ int main() {
 		glEnable(GL_DEPTH_TEST);
 		glLineWidth(1.0f);
 		
-		for(Planet* planet:planets) {
-			render_planet(planet);
-		}
+
+glDisable(GL_DEPTH_TEST); 
+for(Planet* planet:planets) {
+    if(planet->name == "luna") {
+        planet->trail.draw();
+        break;
+    }
+}
+
+glEnable(GL_DEPTH_TEST);
+for(Planet* planet:planets) {
+    render_planet(planet);
+}
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 //		usleep(20000);
