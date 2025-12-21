@@ -8,8 +8,9 @@
 
 const double AU=1.496e11;
 const double G=6.67430e-11;
-const double SCALE = 10/AU;
-const double TIME_SCALE=8640;
+const double SCALE = 1000/AU;
+const double TIME_SCALE=86400*10;
+const double RADIUS_SCALE=1;
 unsigned int trial_steps=50000;
 
 const double MASS_SUN=1.9891e30;
@@ -39,7 +40,7 @@ const double MASS_DEIMOS=1.4762e15;
 
 const double MIPT_1_ORBIT_RADIUS=6.371e6+418200;
 const double VEL_MIPT_1=sqrt(G*MASS_EARTH/MIPT_1_ORBIT_RADIUS);
-const double LUNA_ORBIT_RADIUS=3.844e8+6371e3;
+const double LUNA_ORBIT_RADIUS=3.844e8;
 const double IO_ORBIT_RADIUS=4.217e8;
 const double EUROPA_ORBIT_RADIUS=6.709e8;
 const double GANYMEDE_ORBIT_RADIUS=1.0704e9;
@@ -95,7 +96,7 @@ const double PERIHELION_SATURN=A_SATURN*(1-EX_SATURN);
 const double PERIHELION_URAN=A_URAN*(1-EX_URAN);
 const double PERIHELION_NEPTUN=A_NEPTUN*(1-EX_NEPTUN);
 
-const float RADIUS_SUN=0.15f;
+/*const float RADIUS_SUN=0.15f;
 const float RADIUS_MERCURY=0.0005f;
 const float RADIUS_VENUS=0.0005f;
 const float RADIUS_EARTH=0.0005f;
@@ -118,7 +119,35 @@ const float RADIUS_TITANIA=0.0002f;
 const float RADIUS_OBERON=0.0002f;
 const float RADIUS_TRITON=0.0002f;
 const float RADIUS_PHOBOS=0.0002f;
-const float RADIUS_DEIMOS=0.0002f;
+const float RADIUS_DEIMOS=0.0002f;*/
+
+
+const float RADIUS_SUN = SCALE*695780*RADIUS_SCALE;
+const float RADIUS_MERCURY = 2439.7f * SCALE*RADIUS_SCALE;
+const float RADIUS_VENUS = 6051.8f * SCALE*RADIUS_SCALE;
+const float RADIUS_EARTH = 6371.0f * SCALE*RADIUS_SCALE;
+const float RADIUS_MARS = 3389.5f * SCALE*RADIUS_SCALE;
+const float RADIUS_JUPITER = 69911.0f * SCALE*RADIUS_SCALE;
+const float RADIUS_SATURN = 58232.0f * SCALE*RADIUS_SCALE;
+const float RADIUS_URAN = 25362.0f * SCALE*RADIUS_SCALE;
+const float RADIUS_NEPTUN = 24622.0f * SCALE*RADIUS_SCALE;
+const float RADIUS_MIPT_1 = 0.0005f*RADIUS_SCALE;
+const float RADIUS_LUNA = 1737.4f *SCALE*RADIUS_SCALE;
+const float RADIUS_IO = 1821.6f * SCALE*RADIUS_SCALE;
+const float RADIUS_EUROPA = 1560.8f * SCALE*RADIUS_SCALE;
+const float RADIUS_GANYMEDE = 2634.1f * SCALE*RADIUS_SCALE;
+const float RADIUS_CALLISTO = 2410.3f * SCALE*RADIUS_SCALE;
+const float RADIUS_TITAN = 2574.7f * SCALE*RADIUS_SCALE;
+const float RADIUS_RHEA = 763.8f * SCALE*RADIUS_SCALE;
+const float RADIUS_TETHYS = 531.1f * SCALE*RADIUS_SCALE;
+const float RADIUS_DIONE = 561.4f * SCALE*RADIUS_SCALE;
+const float RADIUS_TITANIA = 788.4f *SCALE*RADIUS_SCALE;
+const float RADIUS_OBERON = 761.4f *SCALE*RADIUS_SCALE;
+const float RADIUS_TRITON = 1353.4f *SCALE*RADIUS_SCALE;
+const float RADIUS_PHOBOS = 11.08f * SCALE*RADIUS_SCALE;
+const float RADIUS_DEIMOS = 6.2f*SCALE*RADIUS_SCALE;
+
+
 
 const float COLOR_SUN[3]={1.0f,1.0f,0.0f};
 const float COLOR_MERCURY[3]={0.7f,0.7f,0.7f};
@@ -704,11 +733,11 @@ struct Camera {
                 } else if(planet->is_sputnik) {
                     distance = 0.01f;
                 } else {
-                    distance = 0.1f;
+                    distance = 0.01f;
                 }
                 
                 angleX = 0.0f;
-                angleY = 0.3f;
+                angleY = 0.0f;
                 update();
                 return;
             }
@@ -812,51 +841,42 @@ struct Tracker {
     }
 };
 struct SatelliteTracker {
-    double last_angle = 0;
-    double l_time = 0;
-    int revolutions = 0;
+    double p_angle = 0;
+    double p_time = 0;
     double period_start = 0;
+    int num_oborots = 0;
+    double current_period = 0;
     bool has_period = false;
-    
-    void update(double sat_x, double sat_z, double parent_x, double parent_z, double t) {
-        t*= TIME_SCALE;
-        double rel_x = sat_x - parent_x;
-        double rel_z = sat_z - parent_z;
-        
+    double sum_angle = 0;
 
+    void update(double rel_x, double rel_z, double time) {
+        time *= TIME_SCALE;
         double current_angle = atan2(rel_z, rel_x);
         
-        if (l_time == 0) {
-            last_angle = current_angle;
-            l_time = t;
+        if (p_time == 0) {
+            p_angle = current_angle;
+            p_time = time;
             return;
         }
         
-
-        double angle_diff = current_angle - last_angle;
+        double angle_diff = current_angle - p_angle;
         if (angle_diff > M_PI) angle_diff -= 2 * M_PI;
         if (angle_diff < -M_PI) angle_diff += 2 * M_PI;
         
+        sum_angle += fabs(angle_diff);
         
-        static double total_angle = 0;
-        total_angle += fabs(angle_diff);
-        
-        if (total_angle >= 2 * M_PI) {
-            total_angle -= 2 * M_PI;
-            revolutions++;
-            
-            if (revolutions == 1) {
-                period_start = t - l_time;
+        if (sum_angle >= (2 * M_PI)) {
+            sum_angle -= 2 * M_PI;
+            num_oborots++;
+
+            if (num_oborots == 1) {
+                period_start = time;
                 has_period = true;
-            }
-            else if (revolutions > 1) {
-                
-                period_start = t / revolutions;
             }
         }
         
-        last_angle = current_angle;
-        l_time = t;
+        p_angle = current_angle;
+        p_time = time;
     }
     
     double get_period() {
@@ -865,6 +885,10 @@ struct SatelliteTracker {
     
     bool ready() {
         return has_period;
+    }
+    
+    double get_angle() {
+        return sum_angle;
     }
 };
 void print_data(Planet* planet, double t) {
@@ -1032,56 +1056,57 @@ double period_phobos=0, period_deimos=0;
             
         }
 
-for(Planet* planet:planets) {
-    if(planet->name=="Mercury") {
+for(Planet* planet : planets) {
+    if(planet->name == "Mercury") {
         mercury_tracker.update(planet->x, planet->z, current_time);
         if(mercury_tracker.ready()) {
-            period_mercury=mercury_tracker.get_period();
+            period_mercury = mercury_tracker.get_period();
         }
     }
-    if(planet->name=="Venus") {
+    else if(planet->name == "Venus") {
         venus_tracker.update(planet->x, planet->z, current_time);
         if(venus_tracker.ready()) {
-            period_venus=venus_tracker.get_period();
+            period_venus = venus_tracker.get_period();
         }
     }
-    if(planet->name=="Earth") {
+    else if(planet->name == "Earth") {
         earth_tracker.update(planet->x, planet->z, current_time);
         if(earth_tracker.ready()) {
-            period_earth=earth_tracker.get_period();
+            period_earth = earth_tracker.get_period();
         }
     }
-    if(planet->name=="Mars") {
+    else if(planet->name == "Mars") {
         mars_tracker.update(planet->x, planet->z, current_time);
         if(mars_tracker.ready()) {
-            period_mars=mars_tracker.get_period();
+            period_mars = mars_tracker.get_period();
         }
     }
-    if(planet->name=="Jupiter") {
+    else if(planet->name == "Jupiter") {
         jupiter_tracker.update(planet->x, planet->z, current_time);
         if(jupiter_tracker.ready()) {
-            period_jupiter=jupiter_tracker.get_period();
+            period_jupiter = jupiter_tracker.get_period();
         }
     }
-    if(planet->name=="Saturn") {
+    else if(planet->name == "Saturn") {
         saturn_tracker.update(planet->x, planet->z, current_time);
         if(saturn_tracker.ready()) {
-            period_saturn=saturn_tracker.get_period();
+            period_saturn = saturn_tracker.get_period();
         }
     }
-    if(planet->name=="Uran") {
+    else if(planet->name == "Uran") {
         uran_tracker.update(planet->x, planet->z, current_time);
         if(uran_tracker.ready()) {
-            period_uran=uran_tracker.get_period();
+            period_uran = uran_tracker.get_period();
         }
     }
-    if(planet->name=="Neptun") {
+    else if(planet->name == "Neptun") {
         neptun_tracker.update(planet->x, planet->z, current_time);
         if(neptun_tracker.ready()) {
-            period_neptun=neptun_tracker.get_period();
+            period_neptun = neptun_tracker.get_period();
         }
     }
     
+    // Спутники
     if(planet->is_sputnik) {
         Planet* parent_planet = nullptr;
         for(Planet* p : planets) {
@@ -1092,86 +1117,90 @@ for(Planet* planet:planets) {
         }
         
         if(parent_planet) {
-            if(planet->name=="luna") {
-                luna_tracker.update(planet->x, planet->z, parent_planet->x, parent_planet->z, current_time);
+
+            double rel_x = planet->x - parent_planet->x;
+            double rel_z = planet->z - parent_planet->z;
+            
+            if(planet->name == "luna") {
+                luna_tracker.update(rel_x, rel_z, current_time);
                 if(luna_tracker.ready()) {
                     period_luna = luna_tracker.get_period();
                 }
             }
-            else if(planet->name=="Io") {
-                io_tracker.update(planet->x, planet->z, parent_planet->x, parent_planet->z, current_time);
+            else if(planet->name == "Io") {
+                io_tracker.update(rel_x, rel_z, current_time);
                 if(io_tracker.ready()) {
                     period_io = io_tracker.get_period();
                 }
             }
-            else if(planet->name=="Europa") {
-                europa_tracker.update(planet->x, planet->z, parent_planet->x, parent_planet->z, current_time);
+            else if(planet->name == "Europa") {
+                europa_tracker.update(rel_x, rel_z, current_time);
                 if(europa_tracker.ready()) {
                     period_europa = europa_tracker.get_period();
                 }
             }
-            else if(planet->name=="Ganymede") {
-                ganymede_tracker.update(planet->x, planet->z, parent_planet->x, parent_planet->z, current_time);
+            else if(planet->name == "Ganymede") {
+                ganymede_tracker.update(rel_x, rel_z, current_time);
                 if(ganymede_tracker.ready()) {
                     period_ganymede = ganymede_tracker.get_period();
                 }
             }
-            else if(planet->name=="Callisto") {
-                callisto_tracker.update(planet->x, planet->z, parent_planet->x, parent_planet->z, current_time);
+            else if(planet->name == "Callisto") {
+                callisto_tracker.update(rel_x, rel_z, current_time);
                 if(callisto_tracker.ready()) {
                     period_callisto = callisto_tracker.get_period();
                 }
             }
-            else if(planet->name=="Titan") {
-                titan_tracker.update(planet->x, planet->z, parent_planet->x, parent_planet->z, current_time);
+            else if(planet->name == "Titan") {
+                titan_tracker.update(rel_x, rel_z, current_time);
                 if(titan_tracker.ready()) {
                     period_titan = titan_tracker.get_period();
                 }
             }
-            else if(planet->name=="Rhea") {
-                rhea_tracker.update(planet->x, planet->z, parent_planet->x, parent_planet->z, current_time);
+            else if(planet->name == "Rhea") {
+                rhea_tracker.update(rel_x, rel_z, current_time);
                 if(rhea_tracker.ready()) {
                     period_rhea = rhea_tracker.get_period();
                 }
             }
-            else if(planet->name=="Tethys") {
-                tethys_tracker.update(planet->x, planet->z, parent_planet->x, parent_planet->z, current_time);
+            else if(planet->name == "Tethys") {
+                tethys_tracker.update(rel_x, rel_z, current_time);
                 if(tethys_tracker.ready()) {
                     period_tethys = tethys_tracker.get_period();
                 }
             }
-            else if(planet->name=="Dione") {
-                dione_tracker.update(planet->x, planet->z, parent_planet->x, parent_planet->z, current_time);
+            else if(planet->name == "Dione") {
+                dione_tracker.update(rel_x, rel_z, current_time);
                 if(dione_tracker.ready()) {
                     period_dione = dione_tracker.get_period();
                 }
             }
-            else if(planet->name=="Titania") {
-                titania_tracker.update(planet->x, planet->z, parent_planet->x, parent_planet->z, current_time);
+            else if(planet->name == "Titania") {
+                titania_tracker.update(rel_x, rel_z, current_time);
                 if(titania_tracker.ready()) {
                     period_titania = titania_tracker.get_period();
                 }
             }
-            else if(planet->name=="Oberon") {
-                oberon_tracker.update(planet->x, planet->z, parent_planet->x, parent_planet->z, current_time);
+            else if(planet->name == "Oberon") {
+                oberon_tracker.update(rel_x, rel_z, current_time);
                 if(oberon_tracker.ready()) {
                     period_oberon = oberon_tracker.get_period();
                 }
             }
-            else if(planet->name=="Triton") {
-                triton_tracker.update(planet->x, planet->z, parent_planet->x, parent_planet->z, current_time);
+            else if(planet->name == "Triton") {
+                triton_tracker.update(rel_x, rel_z, current_time);
                 if(triton_tracker.ready()) {
                     period_triton = triton_tracker.get_period();
                 }
             }
-            else if(planet->name=="Phobos") {
-                phobos_tracker.update(planet->x, planet->z, parent_planet->x, parent_planet->z, current_time);
+            else if(planet->name == "Phobos") {
+                phobos_tracker.update(rel_x, rel_z, current_time);
                 if(phobos_tracker.ready()) {
                     period_phobos = phobos_tracker.get_period();
                 }
             }
-            else if(planet->name=="Deimos") {
-                deimos_tracker.update(planet->x, planet->z, parent_planet->x, parent_planet->z, current_time);
+            else if(planet->name == "Deimos") {
+                deimos_tracker.update(rel_x, rel_z, current_time);
                 if(deimos_tracker.ready()) {
                     period_deimos = deimos_tracker.get_period();
                 }
@@ -1191,7 +1220,8 @@ for(Planet* planet:planets) {
         float aspect=(float)width/(float)height;
         float nearPlane = camera.nearPlane;
         float farPlane = camera.farPlane;
-        gluPerspective(60.0f, aspect, camera.nearPlane, camera.farPlane);
+        float fov = 90.0f;
+        gluPerspective(fov, aspect, 0.000001f, 1000000000.0f);
         
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
