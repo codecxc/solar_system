@@ -8,7 +8,7 @@
 // const
 const double AU=1.496e11;
 const double G=6.67430e-11;
-const double SCALE = 10.0/AU;
+const double SCALE = 1000.0/AU;
 const double TIME_SCALE=86400;
 
 const double MASS_SUN=1.9891e30;
@@ -86,7 +86,7 @@ const double PERIHELION_URAN=A_URAN*(1-EX_URAN);
 const double PERIHELION_NEPTUN=A_NEPTUN*(1-EX_NEPTUN);
 
 
-const float RADIUS_SUN=0.15f;
+const float RADIUS_SUN=0.13f;
 const float RADIUS_MERCURY=0.03f;
 const float RADIUS_VENUS=0.04f;
 const float RADIUS_EARTH=0.01f;
